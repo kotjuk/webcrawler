@@ -11,6 +11,7 @@ import (
 
 func GetLinks(query string) ([]string, error) {
 	var results []string
+	const maxResults = 12
 	base := "https://html.duckduckgo.com/html/"
 	resp, err := http.PostForm(base, url.Values{"q": {query}})
 	if err != nil {
@@ -27,11 +28,15 @@ func GetLinks(query string) ([]string, error) {
 		return nil, err
 	}
 
-	doc.Find("a.result__a").Each(func(i int, s *goquery.Selection) {
+	doc.Find("a.result__a").EachWithBreak(func(i int, s *goquery.Selection) bool {
 		href, exists := s.Attr("href")
 		if exists && strings.HasPrefix(href, "http") {
 			results = append(results, href)
+			if len(results) >= maxResults {
+				return false
+			}
 		}
+		return true
 	})
 
 	return results, nil

@@ -20,6 +20,12 @@ func (m *Monitor) IncrementPages() {
 	m.pagesCrawled++
 }
 
+func (m *Monitor) Pages() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.pagesCrawled
+}
+
 func (m *Monitor) Report() {
 	m.mu.Lock()
 	defer m.mu.Unlock()

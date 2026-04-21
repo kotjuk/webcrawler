@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"fmt"
 	"strings"
 	"webcrawler/index"
 	"webcrawler/logger"
@@ -9,9 +10,27 @@ import (
 	"github.com/gocolly/colly"
 )
 
-func Crawl(startURL string, idx *index.Index, mon *monitor.Monitor) {
+type Options struct {
+	MaxDepth int
+}
+
+func (o Options) normalized() (Options, error) {
+	if o.MaxDepth == 0 {
+		o.MaxDepth = 2
+	}
+	if o.MaxDepth < 1 || o.MaxDepth > 10 {
+		return Options{}, fmt.Errorf("maxDepth must be between 1 and 10")
+	}
+	return o, nil
+}
+
+func Crawl(startURL string, idx *index.Index, mon *monitor.Monitor, opts Options) error {
+	opts, err := opts.normalized()
+	if err != nil {
+		return err
+	}
 	c := colly.NewCollector(
-		colly.MaxDepth(2),
+		colly.MaxDepth(opts.MaxDepth),
 	)
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -31,5 +50,5 @@ func Crawl(startURL string, idx *index.Index, mon *monitor.Monitor) {
 		logger.Log("Посещение: " + r.URL.String())
 	})
 
-	c.Visit(startURL)
+	return c.Visit(startURL)
 }
